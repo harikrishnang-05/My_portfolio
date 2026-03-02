@@ -236,4 +236,59 @@
   window.addEventListener('load', navmenuScrollspy);
   document.addEventListener('scroll', navmenuScrollspy);
 
+  const gformBridge = document.querySelector('#contact-gform-bridge');
+  if (gformBridge) {
+    gformBridge.addEventListener('submit', function(e) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const loading = gformBridge.querySelector('.loading');
+      const error = gformBridge.querySelector('.error-message');
+      const sent = gformBridge.querySelector('.sent-message');
+      loading.classList.add('d-block');
+      error.classList.remove('d-block');
+      sent.classList.remove('d-block');
+
+      const nameVal = gformBridge.querySelector('input[name="name"]').value.trim();
+      const emailVal = gformBridge.querySelector('input[name="email"]').value.trim();
+      const subjectVal = gformBridge.querySelector('input[name="subject"]').value.trim();
+      const messageVal = gformBridge.querySelector('textarea[name="message"]').value.trim();
+
+      const entryName = gformBridge.getAttribute('data-gform-name') || '';
+      const entryEmail = gformBridge.getAttribute('data-gform-email') || '';
+      const entrySubject = gformBridge.getAttribute('data-gform-subject') || '';
+      const entryMessage = gformBridge.getAttribute('data-gform-message') || '';
+
+      if (!entryName || !entryEmail || !entrySubject || !entryMessage) {
+        loading.classList.remove('d-block');
+        error.textContent = 'Set data-gform-* entry IDs on the form.';
+        error.classList.add('d-block');
+        return;
+      }
+
+      const action = 'https://docs.google.com/forms/d/e/1FAIpQLSdNNgl3PxYEsyyuQ1EiS5yvu4DwLuw9wCGW6dU-JF2mAlR6pw/formResponse';
+      const params = new URLSearchParams();
+      params.append(entryName, nameVal);
+      params.append(entryEmail, emailVal);
+      params.append(entrySubject, subjectVal);
+      params.append(entryMessage, messageVal);
+      params.append('fvv', '1');
+      params.append('pageHistory', '0');
+      params.append('submit', 'Submit');
+
+      fetch(action, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: params
+      }).then(() => {
+        loading.classList.remove('d-block');
+        sent.classList.add('d-block');
+        gformBridge.reset();
+        setTimeout(() => sent.classList.remove('d-block'), 4000);
+      }).catch((err) => {
+        loading.classList.remove('d-block');
+        error.textContent = 'Submission failed. Please try again.';
+        error.classList.add('d-block');
+      });
+    }, true);
+  }
 })();
